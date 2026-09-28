@@ -1,0 +1,36 @@
+rules:
+  - id: hardcoded-secret-fallback
+    languages: [typescript, javascript]
+    severity: ERROR
+    message: >
+      A hardcoded string is used as a fallback for a secret
+      (process.env.X || "literal"). If the env var is ever unset —
+      a common deploy mistake — this falls back to a secret sitting
+      in source control, permanently, in git history.
+    patterns:
+      - pattern: process.env.$VAR || "..."
+
+  - id: command-injection-via-exec
+    languages: [typescript, javascript]
+    severity: ERROR
+    message: >
+      Untrusted input interpolated directly into a shell command via
+      exec(). If this value can be influenced by an external caller
+      (an MCP tool argument, a user input), this is a command
+      injection vulnerability — the input can break out of the
+      intended command entirely.
+    patterns:
+      - pattern: exec(`...${$INPUT}...`, ...)
+
+  - id: secret-in-log-statement
+    languages: [typescript, javascript]
+    severity: WARNING
+    message: >
+      A variable whose name suggests a secret (KEY/SECRET/TOKEN/
+      PASSWORD) appears inside a console.log call. Logs are typically
+      far less access-controlled than the secret store itself — this
+      leaks the secret to anyone who can read application logs.
+    pattern-regex: 'console\.log\([^)]*\$\{?\w*(KEY|SECRET|TOKEN|PASSWORD)\w*\}?[^)]*\)'
+    paths:
+      include:
+        - "*.ts"
